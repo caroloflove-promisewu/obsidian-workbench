@@ -573,6 +573,15 @@
   cursor: text;
   word-break: break-word;
 }
+
+/* 已完成项目整体弱化：名称变灰、去掉字重，视觉上「退到后面」 */
+.wb-proj.is-completed .wb-proj-name {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+.wb-proj.is-completed {
+  opacity: .82;
+}
 .wb-proj-right {
   display: flex;
   align-items: center;
@@ -614,6 +623,12 @@
 .wb-select.st-done {
   border-color: var(--color-green, #35b37e);
   color: var(--color-green, #35b37e);
+}
+/* 已完成项目里的状态下拉整体变灰（覆盖上面的绿色），与变灰的项目名呼应 */
+.wb-proj.is-completed .wb-select.st-done {
+  border-color: var(--text-faint);
+  color: var(--text-faint);
+  background: var(--background-primary);
 }
 
 /* 成果要求行 */
@@ -1497,41 +1512,11 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   S6 · 可视化：项目进度条 / 打卡热力图
+   S6 · 可视化：打卡热力图
+   （项目卡片上的进度条已按需求移除，.wb-prog-* 样式一并删除。
+     数据侧 projectProgress() 仍保留，供统计使用。）
    ═══════════════════════════════════════════════════════════ */
 
-
-/* ── 进度条 ── */
-.wb-proj-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-}
-.wb-prog-track {
-  flex: 1 1 auto;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--background-modifier-border);
-  overflow: hidden;
-  min-width: 40px;
-}
-.wb-prog-fill {
-  height: 100%;
-  width: 0;
-  border-radius: 3px;
-  background: var(--interactive-accent);
-  transition: width 0.25s ease;
-}
-.wb-prog-fill.is-done {
-  background: var(--color-green, #3ba55d);
-}
-.wb-prog-label {
-  flex: 0 0 auto;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
 
 /* ── 首页 · 番茄钟 ───────────────────────────────────────── */
 .wb-pomo {
