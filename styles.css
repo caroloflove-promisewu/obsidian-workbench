@@ -473,6 +473,87 @@
 /* ============================================================
    项目看板（S3）
    ============================================================ */
+
+/* ── 项目搜索栏 ───────────────────────────────────────── */
+.wb-proj-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.wb-proj-search::before {
+  /* 放大镜：用纯 CSS 画，免得多打一个图标库 */
+  content: "";
+  position: absolute;
+  left: 12px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--wb-muted);
+  border-radius: 50%;
+  opacity: 0.65;
+  pointer-events: none;
+}
+.wb-proj-search::after {
+  content: "";
+  position: absolute;
+  left: 21px;
+  top: 50%;
+  width: 2px;
+  height: 6px;
+  background: var(--wb-muted);
+  border-radius: 1px;
+  transform: rotate(-45deg);
+  transform-origin: top center;
+  opacity: 0.65;
+  pointer-events: none;
+}
+.wb-proj-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 34px 9px 32px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--wb-card);
+  color: var(--wb-text);
+  font-size: var(--font-ui-small);
+  font-family: inherit;
+  box-shadow: var(--wb-shadow);
+  transition: border-color 0.15s;
+}
+.wb-proj-search-input::placeholder {
+  color: var(--wb-muted);
+}
+.wb-proj-search-input:focus {
+  outline: none;
+  border-color: var(--wb-accent);
+  box-shadow: var(--wb-shadow), 0 0 0 3px rgba(10, 132, 255, 0.12);
+}
+.wb-proj-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--background-modifier-hover);
+  color: var(--wb-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wb-proj-search-clear:hover {
+  color: var(--wb-text);
+}
+.wb-proj-search-tip {
+  margin-top: 4px;
+  font-size: var(--font-ui-smaller);
+  color: var(--wb-muted);
+}
 .wb-proj-bar {
   display: flex;
   align-items: center;
@@ -971,6 +1052,11 @@
 }
 
 /* 移动端 */
+.is-phone .wb-proj-search-input {
+  /* iOS 上输入框字号 <16px 会强制放大页面 */
+  font-size: 16px;
+  padding: 10px 34px 10px 32px;
+}
 .is-phone .wb-proj {
   padding: 10px;
 }
@@ -1661,21 +1747,37 @@
 
 
 /* ── 首页 · 番茄钟 ───────────────────────────────────────── */
+/* 番茄钟：容器够宽（桌面 / iPad）时表盘在左、信息在右，不再是一根竖条；
+   容器窄（手机）时退回竖排。用容器查询而不是视口媒体查询——
+   Obsidian 里插件面板可能被挤在侧栏，视口宽但容器窄的情况很常见。
+   注意：容器查询不能改「容器自己」的布局，所以查询容器放在外层 .wb-pomo-cq，
+   真正被改的是里面的 .wb-pomo。 */
+.wb-pomo-cq {
+  container-type: inline-size;
+  width: 100%;
+}
 .wb-pomo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 /* 标题行要占满整行，不能跟着按钮居中 */
 .wb-pomo .wb-card-title-row {
   width: 100%;
 }
+.wb-pomo-fold-btn {
+  margin-left: auto;
+}
+/* 折叠后「时长」区彻底不占位 */
+.wb-pomo-fold.is-closed {
+  display: none;
+}
 
 .wb-pomo-dial {
   position: relative;
-  width: 152px;
-  height: 152px;
+  width: 104px;
+  height: 104px;
   flex-shrink: 0;
 }
 .wb-pomo-ring {
@@ -1716,7 +1818,7 @@
   pointer-events: none;
 }
 .wb-pomo-clock {
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.5px;
@@ -1724,7 +1826,7 @@
   line-height: 1.1;
 }
 .wb-pomo-phase {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--wb-muted);
 }
 .wb-pomo.is-running .wb-pomo-phase {
@@ -1827,6 +1929,68 @@
   padding: 11px 18px;
   font-size: 14.5px;
 }
+
+/* 表盘右侧的信息列（番茄数 / 按钮 / 选项）—— 窄容器里它就是普通一块 */
+.wb-pomo-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 容器够宽（桌面 / iPad）：表盘在左，信息列在右。
+   这样番茄钟从「一根竖条」变成一块矮宽的横向模块，
+   省下来的竖向空间正好让打卡模块上移。 */
+@container (min-width: 400px) {
+  .wb-pomo {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "head head"
+      "dial side"
+      "fold fold";
+    align-items: center;
+    column-gap: 18px;
+    row-gap: 10px;
+  }
+  .wb-pomo .wb-card-title-row { grid-area: head; }
+  /* 显式指定列：side 在 DOM 里排在表盘之前，不给列号会被自动摆放挤到左边 */
+  .wb-pomo-dial { grid-area: dial; grid-column: 1; }
+  .wb-pomo-side { grid-area: side; grid-column: 2; }
+  .wb-pomo-fold { grid-area: fold; grid-column: 1 / -1; }
+
+  .wb-pomo-side {
+    grid-area: side;
+    align-items: flex-start;
+  }
+  .wb-pomo-side .wb-pomo-rounds { justify-content: flex-start; }
+  .wb-pomo-side .wb-pomo-actions { justify-content: flex-start; }
+  .wb-pomo-side .wb-pomo-opts { justify-content: flex-start; }
+  .wb-pomo-side .wb-pomo-actions .wb-btn.primary { min-width: 108px; }
+}
+
+/* 窄容器（手机）：不硬挤成两栏，但把按钮并回一行、选项收窄，
+   免得竖排后番茄钟占了半屏。 */
+@container (max-width: 399px) {
+  .wb-pomo {
+    gap: 8px;
+  }
+  .wb-pomo-dial {
+    width: 92px;
+    height: 92px;
+  }
+  .wb-pomo-clock { font-size: 21px; }
+  .wb-pomo-actions .wb-btn.primary {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .wb-pomo-actions {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+}
 .wb-btn.is-hidden {
   display: none;
 }
@@ -1849,6 +2013,13 @@
   color: var(--wb-muted);
   cursor: pointer;
   padding-top: 10px;
+}
+/* 窄容器下选项行更紧（写在 .wb-pomo-opt 之后才能覆盖上面的 padding） */
+@container (max-width: 399px) {
+  .wb-pomo-opt {
+    padding-top: 6px;
+    font-size: 11.5px;
+  }
 }
 
 /* ── 首页 · 打卡（简洁一列） ─────────────────────────────── */

@@ -1,7 +1,7 @@
 {
   "id": "personal-workbench",
   "name": "Personal Workbench",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "minAppVersion": "1.4.0",
   "description": "移动端优先的个人工作台：快速记录、项目看板、日程日历、打卡与清单，含热力图与概览统计，全部在 Obsidian 内直接读写本地库。浅色 App 风格界面，明暗主题自适应。",
   "author": "WorkBuddy",
