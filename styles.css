@@ -631,24 +631,6 @@
   background: var(--background-primary);
 }
 
-/* 成果要求行 */
-.wb-proj-goal {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  font-size: var(--font-ui-smaller);
-}
-.wb-goal-label {
-  color: var(--text-faint);
-  flex-shrink: 0;
-}
-.wb-goal-value {
-  color: var(--text-normal);
-  cursor: text;
-  word-break: break-word;
-}
-
 /* 分区标题 */
 .wb-section-head {
   display: flex;
@@ -666,63 +648,11 @@
   letter-spacing: 0.03em;
 }
 
-/* 节点 */
-.wb-nodes,
+/* 待办 */
 .wb-proj-todos {
   display: flex;
   flex-direction: column;
 }
-.wb-node {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 4px;
-  border-radius: 8px;
-}
-.wb-node:hover {
-  background: var(--background-modifier-hover);
-}
-.wb-node-dot {
-  display: flex;
-  align-items: center;
-  color: var(--interactive-accent);
-  flex-shrink: 0;
-}
-.wb-node-dot .svg-icon {
-  width: 14px;
-  height: 14px;
-}
-.wb-node-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.wb-node-name {
-  font-size: var(--font-ui-small);
-  color: var(--text-normal);
-  cursor: text;
-}
-.wb-node-date {
-  font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
-  cursor: text;
-}
-.wb-node-acts {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-.wb-node-linked {
-  font-size: var(--font-ui-smaller);
-  color: var(--text-faint);
-  margin-right: 2px;
-}
-
-/* 待办 */
 .wb-todo-row {
   display: flex;
   align-items: center;
@@ -744,14 +674,72 @@
   cursor: text;
   word-break: break-word;
 }
+.wb-todo-acts {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .12s;
+}
+.wb-todo-row:hover .wb-todo-acts,
+.wb-todo-acts:focus-within {
+  opacity: 1;
+}
+/* 触屏没有 hover，常显 */
+@media (hover: none) {
+  .wb-todo-acts { opacity: 1; }
+}
 
-/* 添加待办 */
+/* 待办日期胶囊 */
+.wb-due-pill {
+  flex-shrink: 0;
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--background-secondary-alt);
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  line-height: 1.5;
+}
+.wb-due-pill:hover {
+  border-color: var(--background-modifier-border);
+}
+.wb-due-pill.today {
+  background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+.wb-due-pill.overdue {
+  background: color-mix(in srgb, var(--wb-red) 14%, transparent);
+  color: var(--wb-red);
+  font-weight: 600;
+}
+.wb-todo-row.is-overdue .wb-todo-text {
+  color: var(--wb-red);
+}
+.wb-todo-row.is-done .wb-due-pill {
+  opacity: .55;
+}
+/* 带日期的待办：左边一道细竖线，扫一眼能分出「哪些进了日程」 */
+.wb-todo-row.has-due {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+}
+
+/* 添加待办：文本 + 日期 */
 .wb-addtodo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 6px;
   padding-left: 4px;
+  flex-wrap: wrap;
 }
 .wb-addtodo-input {
-  width: 100%;
+  flex: 1 1 140px;
+  min-width: 0;
   border: 1px dashed var(--background-modifier-border);
   background: transparent;
   color: var(--text-normal);
@@ -764,6 +752,150 @@
   border-style: solid;
   border-color: var(--interactive-accent);
   background: var(--background-primary);
+}
+.wb-addtodo-date {
+  flex: 0 0 auto;
+  width: 132px;
+  max-width: 52%;
+  border: 1px dashed var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 4px 6px;
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+}
+/* 桌面 Chromium 的原生日期框是「文本 + 日历图标」两端撑开的，
+   卡片宽度一紧文本就会被压成 `…`。改成图标贴左、文本居中，宽一点也只显干净。 */
+.wb-addtodo-date::-webkit-datetime-edit {
+  text-align: center;
+}
+.wb-addtodo-date::-webkit-calendar-picker-indicator {
+  margin-inline-start: 0;
+  opacity: .55;
+  cursor: pointer;
+}
+.wb-addtodo-date:focus {
+  outline: none;
+  border-style: solid;
+  border-color: var(--interactive-accent);
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+/* ── 项目笔记 ───────────────────────────────────────── */
+.wb-proj-notes {
+  display: flex;
+  flex-direction: column;
+}
+.wb-proj-notes .wb-section-head {
+  justify-content: flex-start;
+}
+.wb-notes-title {
+  cursor: pointer;
+  user-select: none;
+}
+.wb-notes-toggle {
+  margin-right: auto;
+}
+.wb-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wb-note-row {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-wrap: wrap;
+}
+.wb-note-row:hover {
+  background: var(--background-modifier-hover);
+}
+.wb-note-stamp {
+  flex-shrink: 0;
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+.wb-note-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+  word-break: break-word;
+}
+.wb-note-row:hover .wb-note-title {
+  color: var(--interactive-accent);
+}
+.wb-note-preview {
+  flex-basis: 100%;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  line-height: 1.55;
+  padding: 2px 0 2px 0;
+  word-break: break-word;
+}
+.wb-note-acts {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s;
+  background: var(--background-primary);
+  border-radius: 6px;
+}
+.wb-note-row:hover .wb-note-acts {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (hover: none) {
+  .wb-note-acts { opacity: 1; pointer-events: auto; }
+  /* 触屏常显操作区，标题要让出位置 */
+  .wb-note-row { padding-right: 62px; }
+}
+
+/* 笔记多行输入 */
+.wb-note-textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: var(--font-ui-small);
+  line-height: 1.6;
+  margin-top: 8px;
+}
+.wb-note-textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+/* 弹窗里的小标题与快捷日期 */
+.wb-modal-sub {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.wb-quick-dates {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 /* 就地编辑输入框 */
@@ -863,9 +995,19 @@
 .is-phone .wb-section-head .wb-btn {
   padding: 2px 8px;
 }
-.is-phone .wb-node-main {
-  flex-direction: column;
-  gap: 1px;
+.is-phone .wb-addtodo {
+  flex-wrap: wrap;
+}
+.is-phone .wb-addtodo-input {
+  flex: 1 1 100%;
+}
+.is-phone .wb-addtodo-date {
+  flex: 1 1 auto;
+  max-width: none;
+  width: auto;
+}
+.is-phone .wb-note-stamp {
+  font-size: 11px;
 }
 .is-phone .wb-proj-right {
   gap: 2px;
