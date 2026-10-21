@@ -45,6 +45,43 @@
   --wb-input-bg: #2c2c2e;
 }
 
+/* ── 弹窗层也要有工作台色板（0.4.5 补）─────────────────────
+   .wb-modal-overlay 是挂在 document.body 上的，**不在 .wb-root 里面**，
+   所以上面那几个 .wb-root 变量它一个都继承不到。
+   以前只有个别按钮肉眼可见地「坏」了（白底白字、边框消失），是因为
+   --wb-accent 取空后背景变透明，而白字还在。与其一个个按钮打补丁，
+   不如让弹窗自己也拿一份色板 —— 新增弹窗时不用再记这条规矩。 */
+.theme-light .wb-modal-overlay {
+  --wb-bg: #f5f5f7;
+  --wb-card: #ffffff;
+  --wb-text: #1c1c1e;
+  --wb-muted: #8e8e93;
+  --wb-faint: #aeaeb2;
+  --wb-line: #e5e5ea;
+  --wb-accent: #0a84ff;
+  --wb-accent-hover: #0071e3;
+  --wb-green: #34c759;
+  --wb-orange: #ff9500;
+  --wb-red: #ff3b30;
+  --wb-radius: 14px;
+  --wb-input-bg: #f5f5f7;
+}
+.theme-dark .wb-modal-overlay {
+  --wb-bg: #000000;
+  --wb-card: #1c1c1e;
+  --wb-text: #f2f2f7;
+  --wb-muted: #98989d;
+  --wb-faint: #6e6e73;
+  --wb-line: #2c2c2e;
+  --wb-accent: #0a84ff;
+  --wb-accent-hover: #409cff;
+  --wb-green: #30d158;
+  --wb-orange: #ff9f0a;
+  --wb-red: #ff453a;
+  --wb-radius: 14px;
+  --wb-input-bg: #2c2c2e;
+}
+
 /* ── 把 Obsidian 主题变量重定向到工作台色板 ───────────────
    这一层让 1780 行既有样式无需改动即可换肤。 */
 .wb-root {
@@ -205,9 +242,11 @@
   background: var(--background-modifier-hover);
 }
 .wb-btn.primary {
-  background: var(--wb-accent);
+  /* 兜底色写成具体值而不是 transparent：变量缺失时最起码还是颗蓝底白字的按钮，
+     而不是「白字 + 透明底」这种看着像按钮消失的样子。 */
+  background: var(--wb-accent, #0a84ff);
   color: #ffffff;
-  border-color: var(--wb-accent);
+  border-color: var(--wb-accent, #0a84ff);
   font-weight: 600;
 }
 .wb-btn.primary:hover {
@@ -341,8 +380,9 @@
 .wb-today-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 11px 2px;
+  gap: 10px;
+  /* 0.4.5：11px → 7px。一屏多出约 2 行，手机上点按仍有余量。 */
+  padding: 7px 2px;
   border-bottom: 1px solid var(--wb-line);
   border-radius: 0;
 }
@@ -369,7 +409,129 @@
 .wb-today-meta {
   font-size: 12px;
   color: var(--wb-muted);
-  margin-top: 3px;
+  margin-top: 1px;
+}
+
+/* ── 今日日程：新增按钮 + 逾期小节（0.4.2）───────────────
+   逾期小节用「横线 + 小标题」和上面的今日日程分开，标题行整行可点，
+   点一下折叠/展开（只切 class，不重绘列表）。 */
+.wb-today-add {
+  flex: 0 0 auto;
+}
+.wb-today-sec {
+  display: flex;
+  flex-direction: column;
+}
+
+.wb-overdue {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--wb-line);
+}
+.wb-overdue-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 8px;
+}
+.wb-overdue-head:hover {
+  background: var(--background-modifier-hover);
+}
+.wb-overdue-caret {
+  width: 12px;
+  flex: 0 0 12px;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--wb-muted);
+  text-align: center;
+}
+.wb-overdue-title {
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--wb-muted);
+  letter-spacing: 0.02em;
+}
+.wb-overdue-count {
+  font-size: var(--font-ui-smaller);
+  color: var(--wb-muted);
+  opacity: 0.75;
+}
+/* 折叠后只留标题行：用 display:none 而不是 max-height，
+   这样内容不会参与布局，「逾期条数」也就不会被撑开 */
+.wb-overdue.is-closed .wb-overdue-body {
+  display: none;
+}
+
+.wb-overdue-item {
+  /* 逾期条目整体压暗一点，但别太灰——它需要被看见 */
+  background: color-mix(in srgb, var(--wb-orange, #ff9500) 4%, transparent);
+}
+.wb-overdue-item:hover {
+  background: color-mix(in srgb, var(--wb-orange, #ff9500) 9%, transparent);
+}
+.wb-overdue-days {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-size: 11px;
+  line-height: 17px;
+  color: var(--wb-red, #ff3b30);
+  background: color-mix(in srgb, var(--wb-red, #ff3b30) 11%, transparent);
+}
+.wb-overdue-move {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: var(--font-ui-smaller);
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+/* ── 重复日程的逾期条目：只显示 + 跳过，不给改期 ── */
+.wb-overdue-repeat-hint {
+  flex: 0 0 auto;
+  margin-left: 2px;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--wb-muted);
+  background: color-mix(in srgb, var(--wb-muted) 10%, transparent);
+  white-space: nowrap;
+}
+.wb-overdue-note {
+  flex: 0 0 auto;
+  align-self: center;
+  max-width: 40%;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--wb-muted);
+  text-align: right;
+  word-break: break-word;
+}
+.wb-overdue-skip {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: var(--font-ui-smaller);
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+/* 手机上「归到今日」不换行，日期标签也别把行挤爆 */
+.is-phone .wb-overdue-move,
+.is-phone .wb-overdue-skip {
+  padding: 5px 8px;
+}
+/* 手机窄屏：说明文字缩到只留「不改期」，把宽度让给主文案 */
+.is-phone .wb-overdue-note {
+  max-width: 34%;
+  font-size: 10px;
+}
+.is-phone .wb-overdue-days {
+  margin-left: 4px;
+  padding: 0 5px;
 }
 
 
@@ -618,13 +780,15 @@
 .wb-proj-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
 }
+/* 0.4.5：卡片内边距 12/14 → 9/12，卡片间距 10 → 7。
+   一屏从 4 张卡变成 5 张多，但行高仍在 32px 以上，触摸不吃亏。 */
 .wb-proj {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 9px 12px;
 }
 .wb-proj.batch-on {
   cursor: pointer;
@@ -654,9 +818,29 @@
   cursor: text;
   word-break: break-word;
 }
+/* 0.4.5：项目名与状态下拉同色。
+   两处都挂在 .st-* 上，只维护这一组色值。 */
+.wb-proj-name.st-doing {
+  color: var(--color-blue, #4a8cff);
+}
+.wb-proj-name.st-watching {
+  color: var(--color-orange, #e8a33d);
+}
+.wb-proj-name.st-billing {
+  color: var(--color-purple, #a06ce8);
+}
+.wb-proj-name.st-paused {
+  color: var(--text-muted);
+}
+.wb-proj-name.st-done {
+  color: var(--color-green, #35b37e);
+}
 
-/* 已完成项目整体弱化：名称变灰、去掉字重，视觉上「退到后面」 */
-.wb-proj.is-completed .wb-proj-name {
+/* 已完成项目整体弱化：名称变灰、去掉字重，视觉上「退到后面」。
+   这里**故意覆盖**上面的 .st-done 绿色 —— 一整屏绿色项目名会把
+   「还活着」的那几个淹掉，已完成本来就该退到后面。 */
+.wb-proj.is-completed .wb-proj-name,
+.wb-proj-name.st-done.is-completed {
   color: var(--text-faint);
   font-weight: 400;
 }
@@ -990,8 +1174,12 @@
   font-family: inherit;
   min-width: 60px;
 }
+/* box-sizing 必须显式写：width:100% + padding 10px + border 1px 在
+   content-box 下会超出容器 22px —— 表现就是弹窗里的输入框右边被切掉一截。 */
 .wb-inline-input.full {
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
   padding: 6px 10px;
   margin-bottom: 8px;
 }
@@ -1004,6 +1192,30 @@
   color: var(--text-faint);
   line-height: 1.6;
   margin-bottom: 4px;
+}
+/* 解锁重复起点后的提醒：要显眼一点，别让人以为还是锁着 */
+.wb-hint.wb-hint-warn {
+  color: var(--wb-orange, #ff9500);
+}
+.wb-hint-text {
+  margin-bottom: 6px;
+}
+.wb-hint-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+/* 按钮嵌在 .wb-hint 里会继承它的浅色字与 1.6 行高，
+   结果是「看着像一行灰字」根本不像按钮 —— 这里把它拉回正常按钮外观。 */
+/* 注意：弹窗挂在 body 上，不在 .wb-root 里 —— --wb-text / --wb-card / --wb-line
+   这些只在 .wb-root 下定义，弹窗里取不到（会 fallback 成空 → 字色发灰、边框消失）。
+   所以这里必须用 Obsidian 原生变量。 */
+.wb-hint-actions .wb-btn {
+  color: var(--text-normal) !important;
+  background: var(--background-primary) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  line-height: 1.4;
+  opacity: 1;
 }
 
 /* 弹窗里的操作行 */
@@ -1715,6 +1927,248 @@
   padding: 0 2px;
 }
 
+/* ── 0.4.5 搜索页：范围胶囊 / 语法说明 / 分组命中行 ──────── */
+
+/* 小胶囊按钮：比 .wb-btn 矮一档，一排能放下 5 个 */
+.wb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  box-shadow: none;
+  height: auto;
+  min-height: 0;
+}
+.wb-chip:hover {
+  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+.wb-chip.is-on {
+  color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+  font-weight: 600;
+}
+.wb-chip.sm {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+.wb-chip.ghost {
+  border-color: transparent;
+  color: var(--text-faint);
+}
+
+.wb-search-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.wb-search-scopes {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wb-search-opts {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+/* 语法说明：默认收起，点开才占地方 */
+.wb-search-help {
+  margin-top: 8px;
+  border-top: 1px dashed var(--background-modifier-border);
+  padding-top: 6px;
+}
+.wb-search-help-sum {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.wb-search-help-sum::-webkit-details-marker {
+  display: none;
+}
+.wb-search-help-sum:hover {
+  color: var(--interactive-accent);
+}
+.wb-search-help-body {
+  padding-top: 6px;
+}
+.wb-search-syntax {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wb-search-syntax-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+}
+.wb-search-code {
+  flex: 0 0 auto;
+  min-width: 108px;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+.wb-search-syntax-desc {
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* 最近搜索 */
+.wb-search-hist {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.wb-search-hist.is-empty {
+  display: none;
+}
+.wb-search-hist-label {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* 命中行：每一处单独一行，点哪行跳哪行 */
+.wb-hit-line {
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 2px 4px;
+  margin-top: 2px;
+}
+.wb-hit-line:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.wb-hit-ln {
+  display: inline-block;
+  min-width: 52px;
+  color: var(--text-faint);
+  font-size: 10.5px;
+  margin-right: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.wb-hit-icon {
+  font-size: 11px;
+  opacity: .8;
+}
+.wb-hit-more {
+  margin-top: 4px;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+  color: var(--text-muted) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+.wb-hit-more:hover {
+  color: var(--interactive-accent) !important;
+}
+.wb-search-tip {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* ── 0.4.5 首页打卡模块 ─────────────────────────────────── */
+.wb-home-habit-sumrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  min-height: 0;
+}
+.wb-home-habit-sumrow.is-empty {
+  display: none;
+}
+/* 热力图折叠容器：收起时彻底不占高度（display:none 而不是高度动画，
+   26 行网格做 height 过渡会在低端设备上手感发涩） */
+.wb-heat-fold {
+  padding: 2px 0 8px;
+  border-bottom: 1px solid var(--wb-line);
+  margin-bottom: 6px;
+}
+.wb-heat-fold.is-closed {
+  display: none;
+}
+.wb-heat-fold .wb-heat-wrap {
+  padding-bottom: 2px;
+}
+.wb-heat-fold .wb-heat-legend {
+  margin-top: 6px;
+}
+
+/* 习惯编辑弹窗里的补卡控件 */
+.wb-field-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 10px 0 4px;
+}
+.wb-field-label:first-child {
+  margin-top: 0;
+}
+.wb-field-inline {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.wb-habit-dates {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* 日期框用 flex-basis 0 才不会被「补上」按钮挤出容器；
+   按钮也补一条 flex:none，避免手机上被压成一条竖线。 */
+.wb-habit-dates .wb-inline-input {
+  flex: 1 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+  width: auto;
+}
+.wb-habit-dates .wb-btn {
+  flex: none;
+}
+.wb-habit-quick {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.wb-habit-count {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  margin-top: 8px;
+}
+
 /* 移动端 */
 .is-phone .wb-habit-head {
   gap: 8px;
@@ -1916,6 +2370,60 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── 「这次专注做什么」标题行 ──────────────────────────── */
+.wb-pomo-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.wb-pomo-task-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 34px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--wb-line);
+  background: var(--background-primary);
+  color: var(--wb-text);
+  font-size: 13.5px;
+  font-family: inherit;
+  /* 覆盖全局 16px：这个框不该在手机上触发 iOS 的自动放大 */
+  -webkit-text-size-adjust: 100%;
+}
+.wb-pomo-task-input::placeholder {
+  color: var(--wb-faint);
+}
+.wb-pomo-task-input:focus {
+  outline: none;
+  border-color: var(--wb-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--wb-accent) 16%, transparent);
+}
+/* 专注中锁住输入：只读但别做成「坏了」的样子 */
+.wb-pomo-task-input.is-locked,
+.wb-pomo-task-input:disabled {
+  background: var(--wb-bg);
+  color: var(--wb-muted);
+  cursor: default;
+  box-shadow: none;
+}
+.wb-pomo-task-log {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--wb-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.wb-pomo-task-log input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
 /* 操作按钮 */
 .wb-pomo-actions {
   display: flex;
@@ -1949,6 +2457,7 @@
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
       "head head"
+      "task task"
       "dial side"
       "fold fold";
     align-items: center;
@@ -1956,6 +2465,8 @@
     row-gap: 10px;
   }
   .wb-pomo .wb-card-title-row { grid-area: head; }
+  /* 「专注的事情」横跨整行，在表盘上方 */
+  .wb-pomo-task { grid-area: task; grid-column: 1 / -1; }
   /* 显式指定列：side 在 DOM 里排在表盘之前，不给列号会被自动摆放挤到左边 */
   .wb-pomo-dial { grid-area: dial; grid-column: 1; }
   .wb-pomo-side { grid-area: side; grid-column: 2; }
@@ -1995,30 +2506,20 @@
   display: none;
 }
 
-/* 选项 */
-.wb-pomo-opts {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding-top: 2px;
-  border-top: 1px solid var(--wb-line);
-  width: 100%;
-}
-.wb-pomo-opt {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--wb-muted);
-  cursor: pointer;
-  padding-top: 10px;
-}
-/* 窄容器下选项行更紧（写在 .wb-pomo-opt 之后才能覆盖上面的 padding） */
+/* 窄容器（手机）：标题行若挤成两行，「计入今日日程」会被顶到下面一行，
+   这时让它靠右对齐，视觉上仍跟输入框是一组。 */
 @container (max-width: 399px) {
-  .wb-pomo-opt {
-    padding-top: 6px;
+  .wb-pomo-task {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .wb-pomo-task-input {
+    height: 32px;
+    font-size: 13px;
+  }
+  .wb-pomo-task-log {
     font-size: 11.5px;
+    margin-left: auto;
   }
 }
 
@@ -2026,7 +2527,7 @@
 .wb-home-habits {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 .wb-home-habit-sum {
   font-size: 12px;
@@ -2035,13 +2536,20 @@
 .wb-home-habit-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
 }
+/* 一行习惯 = 名字 / 7 天格子 / 连续天数 / 打卡 / ⋯
+   0.4.5 改了两处：
+   ① 内边距 8 → 5，
+   ② **允许换行** —— 窄屏上名字 + 7 格 + 天数 + 两个按钮塞不进一行，
+      以前是「名字被截成 QT+属灵…、连续天数直接被挤没」。现在放不下时
+      格子与按钮换到第二行，名字永远优先占满第一行。 */
 .wb-home-habit-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 5px 8px;
   border-radius: 10px;
   transition: background 0.15s;
 }
@@ -2051,9 +2559,10 @@
 .wb-home-habit-row.is-done .wb-home-habit-name {
   color: var(--wb-muted);
 }
+/* 名字优先：flex-grow 大、basis 给足，格子宁愿换行也不许挤压名字 */
 .wb-home-habit-name {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 1 1 120px;
+  min-width: 80px;
   font-size: 13.5px;
   color: var(--wb-text);
   overflow: hidden;
@@ -2065,7 +2574,10 @@
   gap: 3px;
   flex-shrink: 0;
 }
+/* flex 子项默认会被压扁（width 变成「建议值」），必须显式 flex:none
+   锁定尺寸 —— 否则格子会随容器宽度缩成一串小方块，看着像进度条。 */
 .wb-home-habit-dot {
+  flex: none;
   width: 12px;
   height: 12px;
   border-radius: 3px;
@@ -2083,13 +2595,59 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-accent) 45%, transparent);
 }
 .wb-home-habit-streak {
-  flex-shrink: 0;
+  flex: none;
   font-size: 11.5px;
   color: var(--wb-orange);
   white-space: nowrap;
 }
 .wb-home-habit-row .wb-btn {
-  flex-shrink: 0;
+  flex: none;
+}
+/* 打卡按钮 + ⋯ 打包到一行右端，换行时整组一起走，不会拆散 */
+.wb-home-habit-acts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  margin-left: auto;
+}
+
+/* 窄屏（手机）上的打卡行：挤在一行里，而不是折成两行。
+   一行要装下「名字 + 7 格 + 打卡 + ⋯」，390px 宽下预算：
+   按钮 ≈52+26、⋯ ≈20、间距 4×6=24、内边距 16 → 剩约 170px 给名字和格子。
+   所以格子和按钮各瘦一档，名字给 68px 保底（再长就省略号，
+   双击开头就能看见全名）。 */
+@media (max-width: 560px) {
+  .wb-home-habit-row {
+    gap: 5px;
+    padding: 4px 6px;
+  }
+  .wb-home-habit-name {
+    flex: 1 1 68px;
+    min-width: 68px;
+    font-size: 13px;
+  }
+  .wb-home-habit-dots {
+    gap: 2px;
+  }
+  .wb-home-habit-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+  .wb-home-habit-streak {
+    display: none; /* 连续天数在窄屏上让位给名字：它是锦上添花，名字是必需 */
+  }
+  .wb-home-habit-acts {
+    gap: 3px;
+  }
+  .wb-home-habit-row .wb-btn.sm {
+    padding: 4px 8px;
+    font-size: 11.5px;
+  }
+  .wb-home-habit-row .wb-btn.icon {
+    padding: 4px 6px;
+  }
 }
 
 
