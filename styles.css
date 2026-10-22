@@ -389,6 +389,15 @@
 .wb-today-item:last-child {
   border-bottom: none;
 }
+/* 0.4.10：勾完的条目挪到列表末尾，中间用一条淡一点的线隔开，
+   让人一眼看出「上面是还没做的，下面这些是做掉的」。
+   用 margin 做出「往里缩」的效果，比整条虚线更克制。 */
+.wb-today-divider {
+  height: 1px;
+  margin: 6px 0 2px;
+  background: var(--wb-line);
+  opacity: 0.7;
+}
 .wb-today-item:hover {
   background: var(--background-modifier-hover);
 }
@@ -602,6 +611,143 @@
 .wb-modal-body {
   padding: 16px;
   overflow-y: auto;
+}
+
+/* ── 大弹窗（0.4.7 起，「记一条项目笔记」这类真正在写东西的弹窗）──────
+   以前 520px 宽 + 130px 高的小框，写一段话要不停上下滚。
+   现在按「能占多少占多少」来做：
+   · 桌面：几乎铺满可用区（96vw × 94vh，只在超大屏上留一点边）；
+     不再封顶 860px —— 1920 的屏上 860px 只占 45%，等于白白浪费一半屏幕。
+   · 手机：整个全屏（含安全区处理）。
+   · body 纵向 flex，正文 textarea 用 flex:1 吃掉剩余高度。 */
+.wb-modal-lg {
+  /* 用「视口减去固定留白」而不是百分比：百分比在 flex 居中容器里
+     会先被父级内容宽度带偏，实测 92vw 在部分窗口下只有 86%。 */
+  width: calc(100vw - 48px);
+  max-width: none;
+  height: calc(100vh - 48px);
+  max-height: calc(100vh - 48px);
+}
+/* 支持 dvh 的环境优先用它：手机浏览器地址栏收起/展开时高度不会跳。
+   写在后面覆盖上面那组；不支持的浏览器会忽略这两条，退回 vh。 */
+@supports (height: 100dvh) {
+  .wb-modal-lg {
+    height: calc(100dvh - 48px);
+    max-height: calc(100dvh - 48px);
+  }
+}
+.wb-modal-lg .wb-modal-body {
+  /* flex:1 是关键：.wb-modal 本身是 flex column，body 不给 flex 就只按内容撑开，
+     里面的 textarea 再怎么 flex:1 也只能在「内容高度」里分，看起来还是个小框。 */
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* flex 子项要能收缩，否则 textarea 撑破容器不滚动 */
+  gap: 10px;
+  padding: 16px 20px 18px;
+  overflow: hidden; /* 内部各自滚，外层不滚，避免双滚动条 */
+}
+.wb-modal-lg .wb-modal-body > .wb-hint,
+.wb-modal-lg .wb-modal-body > .wb-modal-sub {
+  flex: 0 0 auto;
+  margin: 0;
+}
+.wb-modal-lg .wb-note-title-input {
+  flex: 0 0 auto;
+  font-size: 1.05em;
+  font-weight: 600;
+  padding: 10px 14px;
+}
+.wb-modal-lg .wb-note-textarea-lg {
+  flex: 1 1 auto;
+  min-height: 200px; /* 再小就没什么意义了；窗口高时它会远大于此 */
+  margin-top: 0;
+  resize: none; /* 高度由窗口决定，不提供手动拖拽，省得拖出容器 */
+  font-size: var(--font-text-size, 15px);
+  line-height: 1.75;
+  padding: 12px 14px;
+}
+.wb-modal-lg .wb-modal-actions {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  /* 按钮别贴左，长屏上看着更像「确认区」 */
+  justify-content: flex-end;
+}
+/* 大屏再放大一档：1400 以上基本是台式显示器，四周留 24px 就够 */
+@media (min-width: 1400px) {
+  .wb-modal-lg {
+    width: calc(100vw - 120px);
+    height: calc(100dvh - 120px);
+    max-height: calc(100dvh - 120px);
+  }
+  .wb-modal-lg .wb-modal-body { padding: 20px 26px 22px; }
+}
+
+/* 手机上：真的占满，别留一圈灰边。
+   overlay 本身有 padding，所以这里要把它一起去掉 ——
+   只写 width:100vw 的话，宽度会被 padding 挤成 100vw-32px，边上仍露一条缝。
+   两套选择器都写上：真机上 Obsidian 会给 body 加 .is-phone；
+   演示页 / 网页预览里没有这个类，就靠 @media 兜住（0.4.9 补的，
+   之前只写 .is-phone，导致窄屏下弹窗仍是 92% 而不是全屏）。 */
+.is-phone .wb-modal-overlay,
+body.wb-narrow .wb-modal-overlay {
+  padding: 0;
+}
+.is-phone .wb-modal-overlay .wb-modal-lg,
+body.wb-narrow .wb-modal-overlay .wb-modal-lg {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+  border: none;
+}
+@supports (height: 100dvh) {
+  .is-phone .wb-modal-overlay .wb-modal-lg,
+  body.wb-narrow .wb-modal-overlay .wb-modal-lg {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+@media (max-width: 640px) {
+  .wb-modal-overlay { padding: 0; }
+  .wb-modal-overlay .wb-modal-lg {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+  @supports (height: 100dvh) {
+    .wb-modal-overlay .wb-modal-lg {
+      height: 100dvh;
+      max-height: 100dvh;
+    }
+  }
+  /* 小弹窗在窄屏上仍留一圈边距，不然贴边难看 */
+  .wb-modal-overlay .wb-modal:not(.wb-modal-lg) {
+    width: calc(100vw - 32px);
+    max-width: calc(100vw - 32px);
+  }
+}
+/* 小弹窗在手机上仍保留一圈边距 */
+.is-phone .wb-modal-overlay .wb-modal:not(.wb-modal-lg),
+body.wb-narrow .wb-modal-overlay .wb-modal:not(.wb-modal-lg) {
+  width: calc(100vw - 32px);
+  max-width: calc(100vw - 32px);
+}
+.is-phone .wb-modal-lg .wb-modal-body,
+body.wb-narrow .wb-modal-lg .wb-modal-body {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.is-phone .wb-modal-lg .wb-note-textarea-lg,
+body.wb-narrow .wb-modal-lg .wb-note-textarea-lg {
+  font-size: 16px; /* iOS 小于 16px 会聚焦放大 */
+}
+@media (max-width: 640px) {
+  .wb-modal-lg .wb-note-textarea-lg { font-size: 16px; }
+  .wb-modal-lg .wb-modal-body { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 }
 
 /* ============================================================
@@ -946,6 +1092,17 @@
   flex-shrink: 0;
   opacity: 0;
   transition: opacity .12s;
+}
+/* 0.4.9：待办右侧的「＋日 / 📅」以前只有 8px 内边距、又没有最小宽度，
+   390 宽下被左边文字挤成「+日」两个字摞在一起（看不出是「加日期」）。
+   给它一个下限，两颗按钮一样宽，排在一起才像一组。 */
+.wb-todo-acts .wb-btn.icon {
+  min-width: 34px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .wb-todo-row:hover .wb-todo-acts,
 .wb-todo-acts:focus-within {
@@ -1363,6 +1520,37 @@
   color: var(--text-on-accent);
   font-weight: 600;
 }
+/* ── 清单类别栏（0.4.7）─────────────────────────────────
+   类别可以无限加（书目、待看、想去的地方…），一排塞不下就横滑，
+   不要把标签压成省略号 —— 那时你根本分不清点的是哪个。 */
+.wb-seg-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
+}
+.wb-seg-scroll::-webkit-scrollbar {
+  display: none;
+}
+.wb-seg-scroll .wb-seg-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.wb-seg-add {
+  font-weight: 700;
+  color: var(--interactive-accent);
+  border-left: 1px solid var(--background-modifier-border);
+  padding: 4px 10px;
+}
+.wb-seg-add:hover {
+  color: var(--text-on-accent);
+}
+/* 通用小工具类 */
+.wb-hidden {
+  display: none !important;
+}
 
 /* ── 周视图 ───────────────────────────────────────────── */
 .wb-week {
@@ -1559,11 +1747,20 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 .wb-mini {
   font-size: 11px;
   padding: 1px 4px;
   border-radius: 4px;
+  /* 0.4.9：加上 min-width:0 + flex，里面的 .wb-mini-text 才能被省略号截断。
+     纯 block 时 text-overflow 只对「单行 + 有宽度约束」的块生效，
+     而这里的字宽是被父级 .wb-month-cell 压着的，不给 min-width:0
+     子项就会坚持按内容宽度撑开（flex 的默认 min-width:auto），
+     省略号永远不出现。 */
+  min-width: 0;
+  display: flex;
+  align-items: center;
   background: var(--background-primary);
   border-left: 2px solid var(--color-blue, #4a8cff);
   color: var(--text-normal);
@@ -1657,6 +1854,20 @@
   color: var(--color-blue, #4a8cff);
   border-color: var(--color-blue, #4a8cff);
 }
+/* 0.4.11：列表视图里重复日程显示的是「这一次该做的日子」，逾期的那次标红 */
+.wb-tag.overdue {
+  color: var(--color-red, #e5534b);
+  border-color: var(--color-red, #e5534b);
+}
+/* 「起点 YYYY-MM-DD」只是说明重复规则从哪天开始，不抢视线 */
+.wb-sched-origin {
+  font-size: 10px;
+  opacity: 0.55;
+}
+/* 起点在未来的重复任务：当前不可勾，整行淡化 */
+.wb-sched-row.is-pending {
+  opacity: 0.72;
+}
 .wb-sched-acts {
   display: flex;
   gap: 4px;
@@ -1710,8 +1921,23 @@
 }
 .is-phone .wb-mini {
   font-size: 10px;
-  white-space: normal;
+  /* 0.4.9：原来这里是 white-space: normal。本意是「别截断」，
+     结果 390 宽下每格只有 48px，文字被拆成竖排（「每/周/复/盘」一行一个），
+     既读不出内容、又把格子撑到 150px 高。
+     改回 nowrap + 省略号：能读几个字就读几个，长了用「…」表示。
+     下面还给 .wb-mini-text 留了 min-width:0，否则 flex 子项不会缩，
+     省略号永远不会出现。 */
+  white-space: nowrap;
   line-height: 1.3;
+  /* 手机月格太窄，条目本身就不该是「胶囊 + 左边框」—— 只剩 2px 可见 */
+  border-left-width: 3px;
+  padding: 0 3px;
+}
+.is-phone .wb-mini-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .is-phone .wb-month-dow {
   padding: 4px 2px;
@@ -1740,6 +1966,82 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap; /* 0.4.9：多了「＋ 清单」，窄屏要能换行，别把按钮压扁 */
+}
+/* 手机上 4 个元素挤一行会溢出：计数被推到屏幕外、按钮压变形。
+   0.4.9 用 flex-wrap 分两行：计数靠左、打开文件紧随；
+   两个「＋」各占一半宽度，手指好点。 */
+/* 手机上工具栏有 4 个元素（计数 / 打开文件 / ＋模块 / ＋清单），
+   一行塞不下。0.4.9 改成两行，各有分工：
+     第一行：计数靠左，打开文件靠右；
+     第二行：两个「＋」各占一半宽度（手指好点，也看得出是同级操作）。
+   原来用 margin-right:auto 把按钮整体推走，结果计数（flex-basis:auto
+   但文字很短）被挤到行首之外、贴着屏幕左边缘只剩半个「3 / 10」。 */
+@media (max-width: 640px) {
+  .wb-list-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .wb-list-tools {
+    display: grid;
+    /* 两列等分：第二行两个「＋」各占一列，天然等宽。
+       不能写成 `minmax(0,1fr) auto` —— auto 那列会被「打开文件」
+       的实际宽度（78px）定死，于是第二行的「＋ 清单」也只有 78px，
+       而「＋ 模块」吃满了 256px，两个同级按钮一大一小很怪。 */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "count  open"
+      "addmod addlist";
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .wb-list-tools .wb-list-count,
+  .wb-list-tools .wb-habit-sum {
+    grid-area: count;
+    justify-self: start;
+    margin: 0;
+    white-space: nowrap;
+  }
+  /* 「打开文件」跟在计数同一行，靠右 */
+  .wb-list-tools .wb-btn:not(.wb-btn-addmod):not(.wb-btn-addlist) {
+    grid-area: open;
+    justify-self: end;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .wb-list-tools .wb-btn-addmod {
+    grid-area: addmod;
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .wb-list-tools .wb-btn-addlist {
+    grid-area: addlist;
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  /* 打卡工具栏只有「今天已打 N / M」+「＋ 习惯」两个元素，
+     上面那套两行网格是给清单页四个元素用的，这里保持单行两端排。 */
+  .wb-habit-tools {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .wb-habit-tools .wb-habit-sum {
+    grid-area: auto;
+    justify-self: auto;
+  }
+  .wb-habit-tools .wb-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
 }
 
 .wb-habit-list {
@@ -1827,6 +2129,166 @@
 /* ============================================================
    清单（S5）
    ============================================================ */
+
+/* ── 0.4.6 模块卡片 ──────────────────────────────────────── */
+.wb-mod {
+  background: var(--wb-card, #fff);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 2px 10px 6px;
+  margin-bottom: 10px;
+}
+.wb-mod-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 6px;
+  cursor: pointer;
+  user-select: none;
+}
+.wb-mod-caret {
+  flex: none;
+  width: 12px;
+  font-size: 10px;
+  color: var(--text-faint);
+  text-align: center;
+}
+.wb-mod-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-mod-count {
+  flex: none;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.wb-mod-count.all-done {
+  color: var(--text-success, #248a3d);
+}
+.wb-mod-acts {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.wb-mod:hover .wb-mod-acts,
+.wb-mod-head:focus-within .wb-mod-acts {
+  opacity: 1;
+}
+.wb-mod-peek {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  padding: 0 0 8px 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-mod-addrow {
+  padding: 4px 0 2px 18px;
+}
+.wb-mod-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: var(--font-ui-small);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px dashed var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-normal);
+}
+.wb-mod-input:focus {
+  border-style: solid;
+  border-color: var(--wb-accent, #0a84ff);
+  background: var(--background-primary);
+  outline: none;
+}
+
+/* ── 二级模块（加粗小标题分组） ─────────────────────────── */
+.wb-sub {
+  margin: 2px 0 4px 14px;
+  border-left: 2px solid var(--background-modifier-border);
+  padding-left: 8px;
+}
+.wb-sub-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  cursor: pointer;
+  user-select: none;
+}
+.wb-sub-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-sub-title:hover {
+  color: var(--wb-accent, #0a84ff);
+}
+
+/* ── 「已完成 N 项」折叠条 ──────────────────────────────── */
+.wb-done-strip {
+  display: block;
+  width: calc(100% - 18px);
+  margin: 2px 0 2px 18px;
+  padding: 4px 8px;
+  text-align: left;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: none;
+  height: auto;
+}
+.wb-done-strip:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+
+/* ── 设置面板：清单类别 ─────────────────────────────────── */
+.wb-set-checklists {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 18px;
+}
+.wb-set-cl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wb-set-cl-row .wb-inline-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── 项目编辑弹窗字段 ───────────────────────────────────── */
+.wb-field {
+  margin-bottom: 10px;
+}
+.wb-field-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+
 .wb-list-sec {
   margin-bottom: 16px;
 }
@@ -2187,7 +2649,11 @@
 }
 .is-phone .wb-habit-tools,
 .is-phone .wb-list-tools {
-  justify-content: space-between;
+  /* 0.4.9：这里原来是 space-between，清单工具栏有 4 个元素时会把
+     左边的计数挤出屏幕。改成靠左排、靠 .wb-btn-addmod/.wb-btn-addlist
+     平分剩余宽度（见手机端清单栏那段）。 */
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 .is-phone .wb-search-head {
   flex-wrap: wrap;
@@ -2389,10 +2855,13 @@
   color: var(--wb-text);
   font-size: 13.5px;
   font-family: inherit;
+  /* 0.4.9：原来是 content-box，height:34px 加 padding 12 + border 2
+     实际占 48px —— 窄屏上这一行比表盘还扎眼。改成 border-box 才是
+     声明多少就占多少。 */
+  box-sizing: border-box;
   /* 覆盖全局 16px：这个框不该在手机上触发 iOS 的自动放大 */
   -webkit-text-size-adjust: 100%;
-}
-.wb-pomo-task-input::placeholder {
+}.wb-pomo-task-input::placeholder {
   color: var(--wb-faint);
 }
 .wb-pomo-task-input:focus {
@@ -2416,8 +2885,16 @@
   font-size: 12px;
   color: var(--wb-muted);
   cursor: pointer;
-  white-space: nowrap;
+  /* 0.4.9：原来这里写死 nowrap，窄卡片里文字会被裁（「计入今日日」）。
+     nowrap 收到里面的文字 span 上：标签本身可以换行，
+     但「计入今日日程」五个字不能被切断。 */
+  white-space: normal;
+  flex-shrink: 0;
+  max-width: 100%;
   user-select: none;
+}
+.wb-pomo-task-log-text {
+  white-space: nowrap;
 }
 .wb-pomo-task-log input[type="checkbox"] {
   flex: 0 0 auto;
@@ -2488,10 +2965,6 @@
   .wb-pomo {
     gap: 8px;
   }
-  .wb-pomo-dial {
-    width: 92px;
-    height: 92px;
-  }
   .wb-pomo-clock { font-size: 21px; }
   .wb-pomo-actions .wb-btn.primary {
     flex: 1 1 auto;
@@ -2520,8 +2993,119 @@
   .wb-pomo-task-log {
     font-size: 11.5px;
     margin-left: auto;
+    /* 0.4.9：这里原来只有 white-space: nowrap + flex: 0 0 auto，
+       342px 宽（真机 390 减两侧内边距）下塞不下「输入框 + 计入今日日程」，
+       文字被裁成「计入今日日」。允许换行 + 给输入框一个最小宽度下限，
+       放不下时整组换到第二行，而不是把字切掉。 */
+    white-space: normal;
+    flex: 0 1 auto;
+    max-width: 100%;
+  }
+  .wb-pomo-task-log-text {
+    white-space: nowrap;
   }
 }
+
+/* 0.4.9 · 手机 / 窄卡片里的番茄钟：从 343px 压到 ~200px。
+   实测 390 宽下番茄钟独占 343px ≈ 半屏，往下滑三层才看到打卡。
+
+   布局改成「表盘在左 / 计数 + 按钮在右」：
+     ┌───────────────────────────────┐
+     │ 番茄钟                  时长▾ │
+     │ [这次专注做什么…]  ☑计入今日  │
+     │  ╭──╮   本次会话：0 个番茄    │
+     │  │25│   ┌─────────┬──────┐   │
+     │  ╰──╯   │ 开始专注 │ 重置 │   │
+     └───────────────────────────────┘
+   之前按钮单独占一整行（「开始专注」被拉成 200 多像素宽的巨条），
+   下面那一行其实只用到「重置」那么点宽度，右边全空着 —— 白白多 52px。
+   现在把按钮收进右列，和计数上下排，一行不多占。
+
+   ⚠ 踩过的坑，别再犯：
+   ① `.is-phone .wb-pomo-dial`(0,2,0) 的特异度高于这里的
+      `.wb-pomo-dial`(0,1,0)。原来那条写死 140px，会把这里缩到 76px
+      的决定悄悄改回去 —— 所以手机档那条也一起改成 76px（见文件后段）。
+   ② `.wb-pomo-actions` 是 `.wb-pomo-side` 的子元素，不是 `.wb-pomo`
+      的直接子元素，**grid-area 对它无效**。这里用 display:contents
+      把 side 这层盒子拆掉，让 rounds / actions 直接成为网格项。
+   ③ 不能用视口媒体查询代替 @container：桌面把面板拖窄时同样该收，
+      而手机上 Obsidian 给的是 342px 宽的容器。两条路径都要命中。 */
+@container (max-width: 399px) {
+  .wb-pomo {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "head head"
+      "task task"
+      "dial rounds"
+      "dial actions"
+      "fold fold";
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 4px;
+  }
+  .wb-pomo .wb-card-title-row { grid-area: head; }
+  .wb-pomo-task { grid-area: task; grid-column: 1 / -1; }
+  .wb-pomo-fold { grid-area: fold; grid-column: 1 / -1; }
+
+  /* 表盘占前两行（dial rounds / dial actions），垂直居中 */
+  .wb-pomo-dial {
+    grid-area: dial;
+    grid-column: 1;
+    width: 88px;
+    height: 88px;
+    align-self: center;
+  }
+  .wb-pomo-clock {
+    font-size: 19px;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+  .wb-pomo-phase {
+    font-size: 9.5px;
+    line-height: 1;
+  }
+  /* 88px 的表盘里塞两行字，行距要收紧：
+     默认 gap:3px 时「25:00」会顶到圆环内壁 */
+  .wb-pomo-center {
+    gap: 1px;
+  }
+
+  /* side 拆盒（见上面 ②） */
+  .wb-pomo-side {
+    display: contents;
+  }
+  .wb-pomo-rounds {
+    grid-area: rounds;
+    grid-column: 2;
+    align-self: end;
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 11.5px;
+  }
+  .wb-pomo-actions {
+    grid-area: actions;
+    grid-column: 2;
+    align-self: start;
+    width: 100%;
+    gap: 6px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+  .wb-pomo-actions .wb-btn {
+    padding: 9px 12px;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+  .wb-pomo-actions .wb-btn.primary {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .wb-pomo-actions .wb-btn.sm {
+    flex: 0 0 auto;
+  }
+}
+
 
 /* ── 首页 · 打卡（简洁一列） ─────────────────────────────── */
 .wb-home-habits {
@@ -2884,13 +3468,24 @@
   font-size: 12px;
 }
 
-/* 番茄钟：手机上表盘稍小，按钮拉满好点 */
+/* 番茄钟：手机上表盘尺寸由上面的 @container (max-width:399px) 统一决定。
+   0.4.9 之前这里写死 140px —— 它是 `.is-phone .wb-pomo-dial`(0,2,0)，
+   特异度高于容器查询里的 `.wb-pomo-dial`(0,1,0)，
+   于是「窄卡片里缩到 76px」被它悄悄改回 140px，
+   番茄钟在手机上仍然占掉小半屏。现在把手机档压到 76px，与容器查询对齐；
+   真正的判断仍交给容器查询（桌面把面板拖窄也一致）。 */
 .is-phone .wb-pomo-dial {
-  width: 140px;
-  height: 140px;
+  width: 88px;
+  height: 88px;
 }
 .is-phone .wb-pomo-clock {
-  font-size: 27px;
+  font-size: 18px;
+}
+.is-phone .wb-pomo-phase {
+  font-size: 9.5px;
+}
+.is-phone .wb-pomo-center {
+  gap: 1px;
 }
 .is-phone .wb-pomo-chip {
   padding: 7px 15px;
@@ -2907,4 +3502,234 @@
 .is-phone .wb-pomo-input {
   font-size: 15px;
   width: 76px;
+}
+
+/* 触屏 / 窄屏：没有 hover，模块操作按钮常驻，否则根本点不到 */
+@media (max-width: 560px) {
+  .wb-mod-acts {
+    opacity: 1;
+  }
+  .wb-mod {
+    padding: 2px 8px 6px;
+  }
+  .wb-mod-input {
+    font-size: 16px; /* iOS 防自动缩放 */
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   0.4.9 · 窄屏兜底（@media 版）
+   ─────────────────────────────────────────────────────────
+   上面 90 条移动端规则都挂在 `.is-phone` 上。真机上 Obsidian 一定会给
+   body 加这个类，所以**主力还是它**，不动。
+
+   但有两类场景拿不到这个类，而行为又必须一致：
+     · 平板竖屏 / 桌面分屏把插件面板拖到 700 宽出头 → 布局已经该收窄了，
+       可它不是「手机版 Obsidian」，没有 .is-phone；
+     · 网页版 Obsidian、某些主题会重写 body 的类名。
+   这两类只用宽度判断就够，所以这里给「最影响观感的几条」补媒体查询。
+
+   为什么不是所有 90 条都补：`.is-phone .wb-card`(0,2,0) 特异度高于
+   `.wb-card`(0,1,0)，媒体查询里写同名前缀也压不过它 —— 补了也不生效，
+   只会让样式表更难读。所以这里只补那些**前文没有 .is-phone 版本、
+   纯靠宽度就该变**的规则，以及和 .is-phone 语义等价的重复声明。
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  /* 分屏 / 平板竖屏：标签只瘦身，不让它换行 —— .wb-tabbar 自带
+     overflow-x:auto，加了 wrap 反而会变成两行，把内容往下压。
+     （.is-phone 那套是 flex:1 平分，更激进，真机上仍走它） */
+  .wb-tab {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 6px 10px;
+    font-size: var(--font-ui-smaller);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   0.4.10 · 双链补全面板（src/util/link.ts）
+
+   触发：在快速记录正文 / 关联思考三项 / 项目记一条正文 /
+        清单加条目里敲 `[[`。
+   面板挂在 document.body 上（输入框常有 overflow:hidden，
+   挂在里面会被裁掉），坐标由 JS 每帧算好写进 style。
+
+   层级：要压过 .wb-modal-overlay(100) —— 「记一条」和清单加条目
+   都是弹窗里的输入框，面板必须浮在弹窗上面，否则根本看不见。
+   也不抢 Obsidian 菜单（--layer-menu 通常更大），但这里是逐字符
+   输入触发的临时浮层，用 120 足够且更稳。
+   ═══════════════════════════════════════════════════════════ */
+.wb-link-suggest {
+  position: fixed;
+  z-index: 120;
+  max-width: 460px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--wb-card, var(--background-primary));
+  border: 1px solid var(--wb-line, var(--background-modifier-border));
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  font-size: 13.5px;
+  color: var(--wb-text, var(--text-normal));
+  overflow: hidden;
+}
+.wb-link-list {
+  max-height: 224px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.wb-link-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  min-width: 0;
+}
+.wb-link-item.is-active {
+  background: var(--wb-accent, var(--interactive-accent));
+  color: #fff;
+}
+.wb-link-icon {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  opacity: 0.75;
+}
+.wb-link-icon .svg-icon {
+  width: 16px;
+  height: 16px;
+}
+.wb-link-name {
+  /* 必须 flex:1 1 0（basis 为 0），不能写 auto：
+     写 auto 时它的基准尺寸等于文字宽度，父目录又抢走最多 45%，
+     结果长文件名被压成「单」「清单」「结」一个字一个字往外挤 ——
+     真浏览器截图里出现过，非常像坏了。basis 归零后由 flex 分配剩余空间，
+     名字拿大头、目录拿小头，两边都出省略号。 */
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-link-dir {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--wb-muted, var(--text-muted));
+  direction: rtl;          /* 目录太长时保留尾部（最近的一层更有用） */
+  text-align: left;
+}
+.wb-link-item.is-active .wb-link-dir {
+  color: rgba(255, 255, 255, 0.8);
+}
+.wb-link-hint {
+  padding: 5px 8px 3px;
+  border-top: 1px solid var(--wb-line, var(--background-modifier-border));
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--wb-muted, var(--text-muted));
+}
+.wb-link-empty {
+  padding: 10px 8px;
+  font-size: 12.5px;
+  color: var(--wb-muted, var(--text-muted));
+}
+
+/* 已保存文本里 `[[双链]]` 的展示样式（预览用） */
+.wb-link-chip {
+  color: var(--wb-accent, var(--interactive-accent));
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px dashed currentColor;
+}
+.wb-link-chip:hover {
+  text-decoration: none;
+  border-bottom-style: solid;
+}
+
+/* 手机：面板铺满宽度更好点，别让一个小方块挤在角落。
+   ⚠ 不能写成 `.is-phone .wb-link-suggest, @media (...)` —— 类选择器和
+   媒体查询不能并列，那样写浏览器会把这一整段连同后面的 @media 一起丢掉。 */
+@media (max-width: 640px) {
+  .wb-link-suggest {
+    left: 8px !important;
+    right: 8px;
+    max-width: none;
+    min-width: 0 !important;
+  }
+  .wb-link-item {
+    padding: 9px 8px;   /* 手指点得准 */
+  }
+  .wb-link-list {
+    max-height: 40vh;
+  }
+}
+
+/* ── 目录失效提示条（0.4.11）────────────────────────────────
+   以前目录找不到时页面只显示「这里还没有内容」——数据其实还在库里，
+   只是路径对不上，用户看到的是「我的东西全没了」。
+   这条提示必须显眼（红边），但不要做成弹窗：它是个持续状态，不是一次性事件。 */
+/* 提示区容器（0.4.11）：独立于页面内容，页面自己的 root.empty() 清不掉它 */
+.wb-alerts {
+  flex: 0 0 auto;
+}
+.wb-alerts:empty {
+  display: none;   /* 没提示时彻底不占位 */
+}
+.wb-dir-alert {
+  margin: 8px 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-red, #e5534b);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: rgba(229, 83, 75, 0.07);
+}
+.wb-dir-alert-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.wb-dir-alert-title {
+  font-weight: 600;
+  color: var(--color-red, #e5534b);
+  font-size: 13px;
+}
+.wb-dir-alert-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0;
+  font-size: 12px;
+}
+.wb-dir-alert-name {
+  font-weight: 600;
+  opacity: 0.8;
+}
+.wb-dir-alert-path {
+  font-family: var(--font-monospace, monospace);
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--background-modifier-hover, rgba(120, 120, 120, 0.12));
+  word-break: break-all;
+}
+.wb-dir-alert-tip {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.55;
+  opacity: 0.85;
+}
+.wb-dir-alert-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 9px;
 }
