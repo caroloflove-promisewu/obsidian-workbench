@@ -591,12 +591,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* 0.4.13：手机上「记一条项目笔记」的关闭按钮被挤出屏幕。
+     原因不是按钮定位错，而是标题太长 —— head 是 flex，标题是普通 flex 子项，
+     默认 min-width:auto，长标题撑开就顶到右边界，把 × 挤出去了。
+     gap 保证标题和按钮之间至少留一点空隙；flex-wrap 让小到极致时换行
+     而不是把按钮挤出可视区。 */
+  gap: 12px;
+  flex-wrap: wrap;
   padding: 12px 16px;
   border-bottom: 1px solid var(--background-modifier-border);
 }
 .wb-modal-title {
   font-weight: 600;
   font-size: var(--font-ui-medium);
+  /* 关键三行：允许收缩、允许换行、长单词（英文/路径）也强制断行。
+     缺了 min-width:0，标题会把兄弟节点挤出去 —— 这正是那个 bug。 */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .wb-modal-close {
   border: none;
@@ -607,6 +620,19 @@
   cursor: pointer;
   box-shadow: none;
   padding: 0 4px;
+  /* 不许被压缩、不许被换行挤走：44px 是苹果建议的最小可点区域，
+     视觉上仍是那个小 ×，可点范围靠 padding 撑开（手机上尤其重要）。 */
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: -8px -8px -8px 0;
+  border-radius: 8px;
+}
+.wb-modal-close:hover {
+  background: var(--background-modifier-hover);
 }
 .wb-modal-body {
   padding: 16px;
@@ -3732,4 +3758,23 @@ body.wb-narrow .wb-modal-lg .wb-note-textarea-lg {
   display: flex;
   gap: 8px;
   margin-top: 9px;
+}
+
+/* ── 弹窗头部在窄屏上（0.4.13）───────────────────────────────
+   手机上「记一条项目笔记」的 × 被挤出屏幕。上面已经把「标题可收缩 +
+   按钮不许压缩」写好了，这里再给窄屏加大一点间距，
+   并保证头部本身不会被 100vw 的弹窗挤破（box-sizing）。 */
+.wb-modal-head { box-sizing: border-box; }
+.wb-modal { box-sizing: border-box; }
+.is-phone .wb-modal-head,
+body.wb-narrow .wb-modal-head {
+  gap: 10px;
+  padding: 10px 12px 10px 16px;
+}
+@media (max-width: 640px) {
+  .wb-modal-head {
+    gap: 10px;
+    padding: 10px 12px 10px 16px;
+  }
+  .wb-modal-title { font-size: 16px; }
 }
