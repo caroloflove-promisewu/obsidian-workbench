@@ -595,10 +595,12 @@
      原因不是按钮定位错，而是标题太长 —— head 是 flex，标题是普通 flex 子项，
      默认 min-width:auto，长标题撑开就顶到右边界，把 × 挤出去了。
      gap 保证标题和按钮之间至少留一点空隙；flex-wrap 让小到极致时换行
-     而不是把按钮挤出可视区。 */
+     而不是把按钮挤出可视区。
+     0.4.19：全面屏刘海 / 状态栏下 × 可能难点 —— head 顶部吃 safe-area。 */
   gap: 12px;
   flex-wrap: wrap;
   padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
   border-bottom: 1px solid var(--background-modifier-border);
 }
 .wb-modal-title {
@@ -621,7 +623,8 @@
   box-shadow: none;
   padding: 0 4px;
   /* 不许被压缩、不许被换行挤走：44px 是苹果建议的最小可点区域，
-     视觉上仍是那个小 ×，可点范围靠 padding 撑开（手机上尤其重要）。 */
+     视觉上仍是那个小 ×，可点范围靠 padding 撑开（手机上尤其重要）。
+     0.4.19：sticky + safe-area top 兜底，避免刘海机型下 × 落在状态栏下。 */
   flex: 0 0 auto;
   min-width: 44px;
   min-height: 44px;
@@ -630,6 +633,9 @@
   justify-content: center;
   margin: -8px -8px -8px 0;
   border-radius: 8px;
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 1;
 }
 .wb-modal-close:hover {
   background: var(--background-modifier-hover);
@@ -762,6 +768,11 @@ body.wb-narrow .wb-modal-overlay .wb-modal-lg {
 body.wb-narrow .wb-modal-overlay .wb-modal:not(.wb-modal-lg) {
   width: calc(100vw - 32px);
   max-width: calc(100vw - 32px);
+}
+.is-phone .wb-modal-lg .wb-modal-head,
+body.wb-narrow .wb-modal-lg .wb-modal-head {
+  /* 全屏大弹窗顶到刘海：再强调一次 safe-area（与 .wb-modal-head 叠加取 max） */
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
 }
 .is-phone .wb-modal-lg .wb-modal-body,
 body.wb-narrow .wb-modal-lg .wb-modal-body {
@@ -3777,4 +3788,30 @@ body.wb-narrow .wb-modal-head {
     padding: 10px 12px 10px 16px;
   }
   .wb-modal-title { font-size: 16px; }
+}
+
+/* 坚果云冲突：完整建议稿只读预览，手机上也能滚动核对 */
+.wb-conflict-preview {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 420px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--wb-line);
+  border-radius: 8px;
+  background: var(--wb-input-bg);
+  color: var(--wb-text);
+  font-family: var(--font-monospace, monospace);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+}
+.wb-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+@media (max-width: 640px) {
+  .wb-conflict-preview { min-height: 48vh; }
 }
