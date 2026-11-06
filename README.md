@@ -2,7 +2,9 @@
 
 移动端优先的个人工作台，**直接读写本地库，零后端**。四大端（iPhone / iPad / Windows 桌面 / Windows 笔记本）通过坚果云同步同一份 vault，天然一致。
 
-当前版本 **0.4.20**。
+当前版本 **0.4.22**。
+
+> **同步**：四大端继续用坚果云同步同一库即可（含 iPad）。同一台电脑上请勿同时开「桌面坚果云客户端」与 Obsidian `nutstore-sync`（WebDAV）双通道；冲突走设置 → 维护的合并预览，`*.sync-conflict-*` 副本只提示手清、不自动删合。
 
 ## 快速记录（0.3.0 回归网页版模型）
 
@@ -234,7 +236,18 @@ obsidian://workbench?action=open&tab=projects
 
 ## 版本记录
 
+- **0.4.22（P1：减无意义整文件写 · 勿双通道同步）** — 缓解坚果云同步失败被插件整文件覆盖放大的问题。
+  - **未变跳过**：`writeFile` 在规范化换行后若与磁盘一致，跳过 `vault.modify`（不 `beginSelfWrite`）。
+  - **短时合并**：同一路径极短时间内的多次 `writeFile` 合并为一次落盘；`await` 仍等到写入结束，`withFileLock` 串行读改写与写前重读保持不变。
+  - **设置 / README**：维护区写明勿在同一设备双开桌面坚果云 + Obsidian WebDAV；新增「扫描冲突副本」只提示、不自动删合；内部冲突仍走「检查并合并日程冲突」预览。
+  - **测试**：s11 覆盖未变跳过、换行差异视为未变、同内容连写只 modify 一次。
+- **0.4.21（P0：日程↔项目联动去重 · 康缘开票双行）** — 首页「今日日程」同一待办勾了两次（坚果云多端各插一行、同 `source::` 不同 id）。
+  - **upsert 加固**：`syncProjectSchedule` 整段进文件锁；按精确 `source::` **与** 同项目同正文软匹配定位；命中多条先合并完成态再只留一条，**绝不再 insert 第二行**；`remove` 删光同 source 全部副本。
+  - **自愈去重**：`dedupeLinkedScheduleEntries` 清同 source / 同项目同正文双行；启动 `healProjectTodoSources` 末尾必跑。
+  - **首页兜底**：`readTodayExpanded` → `dedupeExpandedItems`，同一逻辑项最多显示一次。
+  - **测试**：s4 增补同 source 双行、软键 |0+|7、sync 两次幂等、dedupe 落盘。
 - **0.4.20（P0/P1：逾期勾选跨端回弹 + 勾选/进项目整页闪）** — 针对「首页/日程勾了逾期，换手机/iPad/电脑又变逾期」和「勾完或点开项目整页刷新卡顿」。
+
   - **回写兜底**：`writeBackToProject` 在 `source::todo|path|N` 行号对不上时，按日程正文（去掉「项目名·」）重定位待办行；归到今日同样带 hint。
   - **同步不冲完成态**：`syncProjectSchedule` 若日程已是 `[x]`/`done::`，不再用项目侧未勾状态重写成未完成；并回写项目勾选，避免坚果云多端「一边完成一边逾期」。
   - **刷新降噪**：自写宽限 ~200ms（吞 Obsidian 异步 modify，不吞紧随的真编辑）；日程写入后 `acceptCurrentSignature` 更新指纹基线；轮询/点按脏刷新防抖 ~220ms，切回工作台仍立即查。
